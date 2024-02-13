@@ -44,7 +44,12 @@ def ajouter_film():
     return render_template('ajouter-film.html', form=form)
 
 @main.route('/film/<int:id>')
-def display(id):
+def film_detail(id):
     film = Film.query.get_or_404(id)
     return render_template('afficher-film.html', film=film)
+
+@main.route('/films')
+def films():
+    films = Film.query.all()
+    return render_template('films.html', films=films)
 
