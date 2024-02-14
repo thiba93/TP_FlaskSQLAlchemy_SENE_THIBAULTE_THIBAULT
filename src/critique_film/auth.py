@@ -3,7 +3,7 @@ from .forms import InscriptionForm, LoginForm
 from .models import Utilisateur
 from werkzeug.security import generate_password_hash, check_password_hash
 from .database import db
-from flask_login import login_user, current_user
+from flask_login import login_user, current_user, logout_user
 
 auth = Blueprint('auth', __name__)
 
@@ -34,10 +34,15 @@ def connexion():
         user = Utilisateur.query.filter_by(email=form.email.data).first()
         if user and check_password_hash(user.mot_de_passe_hash, form.mot_de_passe.data):
             login_user(user, remember=True)
-            flash("Connecté!")
+            flash("Connecté avec l'utilisateur:")
             flash(current_user.email)
             return redirect(url_for('main.index'))
         else:
             # afficher mot de passe incorrect
             flash('Email ou mot de passe incorrect', 'danger')
     return render_template('connexion.html', form=form)
+
+@auth.route('/deconnexion')
+def deconnexion():
+    logout_user()
+    return redirect(url_for('main.index'))
