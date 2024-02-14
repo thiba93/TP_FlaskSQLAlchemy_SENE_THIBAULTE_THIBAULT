@@ -1,11 +1,16 @@
 from flask import Flask
 from flask_migrate import Migrate
 from .models import Utilisateur
+from flask_login import LoginManager
 from .database import db 
 
 
 migrate = Migrate()
+login_manager = LoginManager()
 
+@login_manager.user_loader
+def load_user(user_id):
+    return Utilisateur.query.get(int(user_id))
 
 def create_app():
     app = Flask(__name__)
@@ -20,6 +25,12 @@ def create_app():
 
     from .routes import main
     app.register_blueprint(main)
+
+    from .auth import auth
+    app.register_blueprint(auth)
+
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.connexion'
 
     return app
 
