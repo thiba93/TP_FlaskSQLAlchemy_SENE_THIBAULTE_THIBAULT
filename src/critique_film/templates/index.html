@@ -8,5 +8,24 @@
 <body>
     <h1>Bonjour</h1>
     <p>Tout le monde !</p>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+
+    
+    {% endif %}  {% endwith %}
+
+
+    {%   if current_user.is_authenticated  %}
+    <a href="{{ url_for('auth.deconnexion')}}">deconnexion</a>
+    {%   else   %}
+
+    <a href="{{ url_for('auth.inscription')}}">Inscription</a>
+    <a href="{{ url_for('auth.connexion')}}">Connexion</a>
+    {%   endif   %}
+
 </body>
 </html>
