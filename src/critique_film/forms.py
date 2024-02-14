@@ -19,3 +19,8 @@ class AjoutFilmForm(FlaskForm):
 class CritiqueForm(FlaskForm):
     contenu = TextAreaField('Critique', validators=[DataRequired()])
     submit = SubmitField('Publier')
+
+class LoginForm(FlaskForm):
+    email = EmailField('Email', validators=[DataRequired(), Email()])
+    mot_de_passe = PasswordField('Mot de Passe', validators=[DataRequired()])
+    submit = SubmitField('Connexion')
