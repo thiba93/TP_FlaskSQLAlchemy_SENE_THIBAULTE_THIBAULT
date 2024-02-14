@@ -1,0 +1,6 @@
+<h1>Publier une critique pour {{ film.titre}} </h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    {{ form.contenu.label }}    {{ form.contenu }}
+    {{ form.submit()}}
+</form>
