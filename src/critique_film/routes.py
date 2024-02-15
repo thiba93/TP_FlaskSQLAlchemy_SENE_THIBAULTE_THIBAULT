@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for
 from .forms import  AjoutFilmForm, CritiqueForm, LoginForm
 from .models import  Film, Critique
 from .database import db
+from flask_login import login_required, current_user
 main = Blueprint('main', __name__)
 
 @main.route('/')
@@ -13,6 +14,7 @@ def index():
 
 
 @main.route('/ajouter-film', methods=['GET', 'POST'])
+@login_required
 def ajouter_film():
     form = AjoutFilmForm()
     if form.validate_on_submit():
@@ -39,6 +41,7 @@ def films():
 
 
 @main.route('/film/<int:id>/critique', methods=['GET', 'POST'])
+@login_required
 def ajouter_critique(id):
     form = CritiqueForm()
     film = Film.query.get_or_404(id)
@@ -46,6 +49,15 @@ def ajouter_critique(id):
         critique = Critique(contenu=form.contenu.data, film=film)
         db.session.add(critique)
         db.session.commit()
-        return redirect(url_for('main.film_detail', id=id))
+        return redirect(url_for('main.film_detail', id=id)) 
     return render_template('ajouter_critique.html', film=film, form=form)
+
+@main.route('/like-film/<int:id_film>')
+@login_required
+def like_film(id_film):
+    film = Film.query.get_or_404(id_film)
+    if not current_user in film.liked_by:
+        film.liked_by.append(current_user)
+        db.session.commit()
+    return redirect(url_for('main.film_detail', id=id_film))
 
