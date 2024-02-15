@@ -2,3 +2,8 @@
 <p>Réalisateur: {{ film.realisateur }} </p>
 <p>Année de sortie: {{ film.annee_sortie }}</p>
 <p>Genre: {{ film.genre }}</p>
+<p>Likes: {{ film.likes }}</p>
+
+{% if current_user.is_authenticated %}
+    <a href="{{ url_for('main.like_film', id_film=film.id)}}">Like</a>
+{% endif %}
