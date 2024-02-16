@@ -2,6 +2,7 @@ from flask import jsonify, request, Blueprint
 from .models import Chambre, Reservation, Client
 from datetime import datetime
 from .database import db
+from sqlalchemy import and_, not_, or_
 main = Blueprint('main', __name__)
 
 @main.route('/api/chambres', methods=['POST'])
@@ -101,6 +102,7 @@ def creer_reservation():
     id_chambre = data.get('id_chambre')
     date_arrivee = data.get('date_arrivee')
     date_depart = data.get('date_depart')
+    statut = data.get('statut')
 
     # Conversion des dates en objets datetime
     try:
@@ -111,9 +113,9 @@ def creer_reservation():
 
     # Vérification de la disponibilité de la chambre
     reservations_existantes = Reservation.query.filter(
-        Reservation.id_chambre == id_chambre,
-        Reservation.date_depart > date_arrivee,
-        Reservation.date_arrivee < date_depart
+    Reservation.id_chambre == id_chambre,
+    Reservation.date_depart > date_arrivee,
+    Reservation.date_arrivee < date_depart
     ).all()
 
     if reservations_existantes:
@@ -124,7 +126,8 @@ def creer_reservation():
         id_client=id_client,
         id_chambre=id_chambre,
         date_arrivee=date_arrivee,
-        date_depart=date_depart
+        date_depart=date_depart,
+        statut=statut
     )
 
     db.session.add(nouvelle_reservation)
@@ -133,6 +136,49 @@ def creer_reservation():
         return jsonify({"success": True, "message": "Réservation créée avec succès."}), 201
     except Exception as e:
         db.session.rollback()
+        print(e)  # Ou utilisez votre système de logging préféré
         return jsonify({"success": False, "message": "Erreur lors de la création de la réservation."}), 500
+
+@main.route('/api/reservations/<int:id>', methods=['DELETE'])
+def annuler_reservation(id):
+    reservation = Reservation.query.get(id)
+    if not reservation:
+        return jsonify({"success": False, "message": "Réservation non trouvée."}), 404
+
+    db.session.delete(reservation)
+    try:
+        db.session.commit()
+        return jsonify({"success": True, "message": "Réservation annulée avec succès."})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": "Erreur lors de l'annulation de la réservation."}), 500
+
+@main.route('/api/chambres/disponibles', methods=['GET'])
+def rechercher_chambres_disponibles():
+    date_arrivee = request.args.get('date_arrivee')
+    date_depart = request.args.get('date_depart')
+
+    try:
+        date_arrivee = datetime.strptime(date_arrivee, '%Y-%m-%d')
+        date_depart = datetime.strptime(date_depart, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({"success": False, "message": "Format de date invalide. Utilisez YYYY-MM-DD."}), 400
+
+    if date_arrivee >= date_depart:
+        return jsonify({"success": False, "message": "La date d'arrivée doit être antérieure à la date de départ."}), 400
+
+    # Recherche des chambres qui ne sont pas réservées pendant la période donnée
+    chambres_disponibles = Chambre.query.outerjoin(Reservation, and_(
+        Reservation.id_chambre == Chambre.id,
+        not_(and_(Reservation.date_depart <= date_arrivee, Reservation.date_arrivee >= date_depart))
+    )).filter(or_(Reservation.id == None, Reservation.date_depart <= date_arrivee, Reservation.date_arrivee >= date_depart)).all()
+
+    resultat = [
+        {"id": chambre.id, "numero": chambre.numero, "type": chambre.type, "prix": chambre.prix}
+        for chambre in chambres_disponibles
+    ]
+
+    return jsonify(resultat), 200
+
 
 
