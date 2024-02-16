@@ -93,6 +93,7 @@ def ajouter_client():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "message": "Erreur lors de l'ajout du client."}), 500
+
 @main.route('/api/reservations', methods=['POST'])
 def creer_reservation():
     data = request.get_json()
